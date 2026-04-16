@@ -2,7 +2,7 @@
 
 ## System Overview
 
-```
+```text
 ┌─────────────────────────────────────────────────────────────────┐
 │                        DJ BOOTH                                 │
 │  ┌──────────┐  ┌──────────┐  ┌──────────┐                     │
@@ -54,7 +54,7 @@ Packets encode "beat will happen at time T" as an absolute coordinator-clock tim
 
 Each wristband maintains a running estimate of the offset between the coordinator's clock and its own local clock using an exponential moving average (EMA) filter with α=0.1:
 
-```
+```text
 offset_estimate = α × new_offset + (1 - α) × offset_estimate
 ```
 
@@ -93,7 +93,7 @@ Fallback when no CDJ tempo master is detected. After a 2-second timeout (`CDJ_TI
 
 ### Transitions
 
-```
+```text
 CDJ beat received ──► CDJ_ACTIVE
                          │
                     2s timeout (no CDJ beats)
@@ -149,11 +149,13 @@ ESP-NOW is Espressif's peer-to-peer WiFi protocol used for dongle-to-wristband c
 The coordinator is the brain of the system. It bridges DJ Link and Ableton Link, manages beat source state, and generates v2 timing packets.
 
 Key internals:
+
 - `BeatSourceState`: CDJ state tracking with time-injectable methods for deterministic testing
 - Builds v2 packets at a configurable rate (default 20Hz)
 - Serial reconnect on disconnect
 
 CLI options:
+
 | Flag | Description |
 |---|---|
 | `--port` | Serial port for dongle |
@@ -179,6 +181,7 @@ The dongle is a simple serial-to-ESP-NOW bridge with a framing state machine:
 4. **ESP-NOW broadcast**: Forwards valid packets
 
 Additional behavior:
+
 - Frame timeout (50ms) resets partial packets to recover from corruption
 - Tracks stats: `packets_forwarded`, `crc_errors`, `version_errors`
 
@@ -190,15 +193,18 @@ Additional behavior:
 The wristband receives ESP-NOW packets and drives LED animations synced to beats:
 
 **Receive path**:
+
 - ESP-NOW callback validates sync byte, protocol version, and CRC
 - Parses all packet fields (tempo, beat/bar timestamps, phase, beat source)
 - Updates clock offset EMA (α=0.1)
 
 **Main loop**:
+
 - Computes predicted local time for the next beat using clock offset estimate
 - Fires FastLED animation at the scheduled moment
 
 **Flash colors**:
+
 | Color | Meaning |
 |---|---|
 | Orange | Downbeat (beat 1 of bar) |
@@ -214,19 +220,23 @@ The wristband receives ESP-NOW packets and drives LED animations synced to beats
 The coordinator has **40 tests** covering four layers:
 
 ### Unit Tests
+
 - Packet building: field encoding, byte layout, sync/version bytes
 - CRC validation: correct computation for known inputs
 - `BeatSourceState` methods: state transitions, timeout behavior, beat ingestion
 - On-air mask: channel status parsing
 
 ### Firmware Simulators
+
 - **DongleSim**: Rust implementation of the dongle's framing state machine — sync detection, version check, CRC validation, frame timeout
 - **WristbandSim**: Rust implementation of the wristband's packet parser and clock offset EMA filter
 
 ### End-to-End Integration
+
 Full pipeline tests: CDJ Beat → `BeatSourceState` → `build_packet` → DongleSim → WristbandSim. Verifies that a beat event from a CDJ produces the correct LED flash time at the wristband.
 
 ### CRC Cross-Validation
+
 The coordinator uses Rust's `crc` crate with a custom non-reflected algorithm. Firmware uses manual bit-banging. Tests verify both implementations produce identical results for the same inputs.
 
 ## Hardware (Stage 1 Prototype)

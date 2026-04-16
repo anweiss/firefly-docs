@@ -6,7 +6,7 @@ A conversation about building battery-powered, beat-synced LED wristbands using 
 
 ## 1. IoT project ideas for an Ableton Link Rust port + ESP32
 
-**Q:** I have a Rust implementation of the Ableton Link protocol at https://github.com/anweiss/ableton-link-rs. I'm working on an ESP32 implementation — what are some IoT project ideas I can try this out with? I have a home DJ setup (Pioneer CDJ3000s, DJM A9) and produce in Ableton.
+**Q:** I have a Rust implementation of the Ableton Link protocol at <https://github.com/anweiss/ableton-link-rs>. I'm working on an ESP32 implementation — what are some IoT project ideas I can try this out with? I have a home DJ setup (Pioneer CDJ3000s, DJM A9) and produce in Ableton.
 
 **A:** With Link running on ESP32s, you get cheap, wireless, tempo-synced microcontrollers that can talk to Ableton, your CDJs (which support Link natively), and each other. Ideas:
 
@@ -79,6 +79,7 @@ Key engineering choices:
 **What Link gives you**: a shared timeline and tempo across all peers. Peers query a local `beat_at_time(host_time)` function — no "beat events" are fired.
 
 **Coordinator's job**:
+
 1. Ask Link for current tempo and beat
 2. Ask Link for the host time of the next downbeat
 3. Package into an ESP-NOW broadcast
@@ -133,12 +134,14 @@ Key engineering choices:
 ## 9. Zero-soldering prototype parts list
 
 **From Seeed Studio**:
+
 - 2× XIAO ESP32-C3 (pre-soldered headers)
 - 2× XIAO Expansion Board Base **with OLED** (has JST-PH battery socket + built-in OLED for debug)
 - 2× Grove RGB LED Stick (WS2813) — originally recommended Grove Chainable P9813 but pivoted to WS2813 for better ecosystem support
 - 1× Grove 4-pin Buckled 20cm Cable 5-pack
 
 **From Amazon (separate small order)**:
+
 - 1× USB-C data cable (if needed)
 - 1× $15 auto-ranging multimeter (strongly recommended)
 - 2× 3.7V 500mAh LiPo with JST-PH 2.0 connector — EEMB or AKZYTUE from Amazon, or (cleanest) Adafruit product 1578
@@ -191,6 +194,7 @@ Five hops:
 **Critical design choice**: send "the beat will happen at time T" rather than "beat now." Absorbs ESP-NOW jitter into scheduling lead time instead of into flash timing. All 30 wristbands flash within microseconds of each other, not in a 1–4ms ripple.
 
 **Code artifacts**:
+
 - `coordinator-mac/src/main.rs` — Rust, ~200 lines
 - `dongle-firmware/dongle.ino` — Arduino, ~80 lines, flashed once
 - `wristband-firmware/wristband.ino` — Arduino, ~200 lines, the one you iterate on
@@ -206,6 +210,7 @@ Five hops:
 **BOM**: ESP32-S3-WROOM-1 module, USB-C connector with CC resistors, LDO regulator, caps, status LED, optional button. **~$5 in parts, ~$8–10 fully assembled by JLCPCB.**
 
 **Firmware does 5 things concurrently**:
+
 1. WiFi management
 2. Link protocol (your Rust port)
 3. ESP-NOW broadcasting
@@ -215,6 +220,7 @@ Five hops:
 **Dual-core layout**: PRO_CPU runs WiFi + Link; APP_CPU runs ESP-NOW broadcasting. Lock-free atomic shared state between cores.
 
 **Hard parts**:
+
 - Networking abstractions (`esp-idf-hal` + `std` is the easiest port path)
 - Clock precision via `esp_timer_get_time()`
 - Memory budget (fine on S3, possibly tight on C3)
@@ -246,6 +252,7 @@ Five patterns, combinable:
 **Venue with no usable WiFi**: carry a **travel router** (GL.iNet Mango, $25, USB-powered) as your private network. Provision the coordinator for the Mango's SSID once, and your whole setup (coordinator, Ableton, CDJs) joins that private network at every venue.
 
 **Staged implementation**:
+
 - **Stage 1**: hardcoded credentials, reflash to change. Ship in a weekend.
 - **Stage 2**: USB serial console. One evening.
 - **Stage 3**: captive portal + multi-network storage. One weekend.
